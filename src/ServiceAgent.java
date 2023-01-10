@@ -21,9 +21,16 @@ public class ServiceAgent extends Agent {
 		ServiceDescription sd2 = new ServiceDescription();
 		sd2.setType("answers");
 		sd2.setName("dictionary");
+
+		ServiceDescription sd3 = new ServiceDescription();
+		sd3.setType("answers");
+		sd3.setName("vera");
+
 		//add them all
 		dfad.addServices(sd1);
 		dfad.addServices(sd2);
+		dfad.addServices(sd3);
+
 		try {
 			DFService.register(this,dfad);
 		} catch (FIPAException ex) {
@@ -32,6 +39,7 @@ public class ServiceAgent extends Agent {
 		
 		addBehaviour(new WordnetCyclicBehaviour(this));
 		addBehaviour(new DictionaryCyclicBehaviour(this));
+		addBehaviour(new VeraCyclicBehaviour(this));
 		//doDelete();
 	}
 	protected void takeDown() {
@@ -142,6 +150,42 @@ class DictionaryCyclicBehaviour extends CyclicBehaviour
 			try
 			{
 				response = agent.makeRequest("english", content);
+			}
+			catch (NumberFormatException ex)
+			{
+				response = ex.getMessage();
+			}
+			reply.setContent(response);
+			agent.send(reply);
+		}
+	}
+}
+
+class VeraCyclicBehaviour extends CyclicBehaviour
+{
+	ServiceAgent agent;
+	public VeraCyclicBehaviour(ServiceAgent agent)
+	{
+		this.agent = agent;
+	}
+	public void action()
+	{
+		MessageTemplate template = MessageTemplate.MatchOntology("vera");
+		ACLMessage message = agent.receive(template);
+		if (message == null)
+		{
+			block();
+		}
+		else
+		{
+			//process the incoming message
+			String content = message.getContent();
+			ACLMessage reply = message.createReply();
+			reply.setPerformative(ACLMessage.INFORM);
+			String response = "";
+			try
+			{
+				response = agent.makeRequest("vera",content);
 			}
 			catch (NumberFormatException ex)
 			{
