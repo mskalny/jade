@@ -57,7 +57,7 @@ class MyCyclicBehaviour extends CyclicBehaviour {
 			int performative = message.getPerformative();
 			if (performative == ACLMessage.REQUEST)
 			{
-				String uniqueID = "id" + System.currentTimeMillis();
+				String uniqueID = UUID.randomUUID().toString();
 				this.textToTranslate.put(uniqueID, content);
 
 				//I cannot answer but I will search for someone who can
