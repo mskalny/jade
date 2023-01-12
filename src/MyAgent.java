@@ -5,9 +5,11 @@ import jade.core.behaviours.*;
 import jade.lang.acl.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
+import java.util.UUID;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
 
 public class MyAgent extends Agent {
 	protected void setup () {
@@ -38,6 +40,9 @@ public class MyAgent extends Agent {
 
 class MyCyclicBehaviour extends CyclicBehaviour {
 	MyAgent myAgent;
+
+	HashMap<String, String> textToTranslate = new HashMap<String, String>();
+
 	public MyCyclicBehaviour(MyAgent myAgent) {
 		this.myAgent = myAgent;
 	}
@@ -48,9 +53,13 @@ class MyCyclicBehaviour extends CyclicBehaviour {
 		} else {
 			String ontology = message.getOntology();
 			String content = message.getContent();
+
 			int performative = message.getPerformative();
 			if (performative == ACLMessage.REQUEST)
 			{
+				String uniqueID = "id" + System.currentTimeMillis();
+				this.textToTranslate.put(uniqueID, content);
+
 				//I cannot answer but I will search for someone who can
 				DFAgentDescription dfad = new DFAgentDescription();
 				ServiceDescription sd = new ServiceDescription();
@@ -68,6 +77,7 @@ class MyCyclicBehaviour extends CyclicBehaviour {
 						forward.addReceiver(new AID(foundAgent, AID.ISLOCALNAME));
 						forward.setContent(content);
 						forward.setOntology(ontology);
+						forward.setReplyWith(uniqueID);
 						myAgent.send(forward);
 					}
 				}
@@ -79,6 +89,16 @@ class MyCyclicBehaviour extends CyclicBehaviour {
 			}
 			else
 			{	//when it is an answer
+				String receivedUniqueId = message.getInReplyTo();
+
+				if (receivedUniqueId.length() > 0) {
+					content = "<h3>Translated text: "
+							+ this.textToTranslate.get(receivedUniqueId)
+							+ "</h3><br>"
+							+ content
+							+ "<br>";
+				}
+
 				myAgent.displayHtmlResponse(content);
 			}
 		}
